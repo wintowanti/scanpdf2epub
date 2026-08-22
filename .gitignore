@@ -8,8 +8,20 @@ venv/
 imgs/
 __pycache__/
 
+# 批量入口默认输入目录
+input/
+
+# demo 生成的大体积样例（demo/output/ 与误放到 demo/ 根下的 pdf）
+demo/output/
+demo/*.pdf
+
+# 工具缓存
+.ruff_cache/
+
 # 但项目自身的 Markdown 文档要保留
 !README.md
+!docs/*.md
+!demo/README.md
 
 # 其它
 .DS_Store

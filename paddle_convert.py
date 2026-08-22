@@ -6,7 +6,6 @@ Usage:
 """
 import argparse
 import re
-import sys
 from pathlib import Path
 
 import pypdfium2 as pdfium
@@ -150,11 +149,11 @@ def render_pages(pdf_path: str, start: int, count: int, dpi: int):
     return imgs, pages, total
 
 
-def build_pipeline(device_batch=16):
+def build_pipeline(device_batch=16, lang="ch"):
     from paddleocr import PPStructureV3
 
     return PPStructureV3(
-        lang="ch",
+        lang=lang,
         use_doc_orientation_classify=True,
         use_doc_unwarping=True,
         use_textline_orientation=True,
@@ -188,30 +187,26 @@ def crop_images_from_markdown(page_md, page_img, img_dir: Path):
         print(f"  saved image: imgs/{fname}", flush=True)
 
 
-def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument("pdf")
-    ap.add_argument("--max-pages", type=int, default=None)
-    ap.add_argument("--start-page", type=int, default=0)
-    ap.add_argument("--dpi", type=int, default=200)
-    ap.add_argument("--output", default=None, help="output directory (default: <stem>/ next to pdf)")
-    args = ap.parse_args()
+def convert_pdf(pdf_path, out_dir, start_page=0, max_pages=None, dpi=200, lang="ch", device_batch=16):
+    """Convert one PDF to Markdown (+ imgs/) under `out_dir`.
 
-    pdf_path = Path(args.pdf)
-    out_dir = Path(args.output) if args.output else pdf_path.with_suffix("")
+    Returns the path of the produced Markdown file. Pulled out of ``main()``
+    so the unified ``main.py`` CLI can drive the pipeline in-process.
+    """
+    pdf_path = Path(pdf_path)
+    out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     md_path = out_dir / f"{pdf_path.stem}.md"
     img_dir = out_dir / "imgs"
 
     pdf = pdfium.PdfDocument(str(pdf_path))
     total = len(pdf)
-    start = args.start_page
-    end = min(start + (args.max_pages or total - start), total)
-    n_pages = end - start
-    print(f"Converting {n_pages} pages (PDF total: {total}): page idx {start}-{end-1}", flush=True)
+    end = min(start_page + (max_pages or total - start_page), total)
+    n_pages = end - start_page
+    print(f"Converting {n_pages} pages (PDF total: {total}): page idx {start_page}-{end-1}", flush=True)
 
     print("Building PPStructureV3 pipeline...", flush=True)
-    pipeline = build_pipeline()
+    pipeline = build_pipeline(device_batch=device_batch, lang=lang)
 
     # Render + process in chunks so RAM stays bounded (370 @ 200DPI ≈ 4.6GB).
     all_md_parts = []
@@ -219,9 +214,9 @@ def main():
     BATCH = 4   # pages fed to pipeline.predict per call
     n_chunks = (n_pages + CHUNK - 1) // CHUNK
     for c in range(n_chunks):
-        idxs = list(range(start + c * CHUNK, min(start + (c + 1) * CHUNK, end)))
+        idxs = list(range(start_page + c * CHUNK, min(start_page + (c + 1) * CHUNK, end)))
         imgs = [
-            np.array(pdf[i].render(scale=args.dpi / 72).to_pil().convert("RGB"))
+            np.array(pdf[i].render(scale=dpi / 72).to_pil().convert("RGB"))
             for i in idxs
         ]
         print(f"  chunk {c+1}/{n_chunks}: pages {idxs[0]}-{idxs[-1]}", flush=True)
@@ -240,6 +235,21 @@ def main():
     full_md = fix_markdown("\n\n".join(all_md_parts))
     md_path.write_text(full_md, encoding="utf-8")
     print(f"Markdown saved to: {md_path} ({len(full_md)} chars)", flush=True)
+    return md_path
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("pdf")
+    ap.add_argument("--max-pages", type=int, default=None)
+    ap.add_argument("--start-page", type=int, default=0)
+    ap.add_argument("--dpi", type=int, default=200)
+    ap.add_argument("--lang", default="ch", help="PaddleOCR recognition language (default: ch)")
+    ap.add_argument("--output", default=None, help="output directory (default: <stem>/ next to pdf)")
+    args = ap.parse_args()
+
+    out_dir = Path(args.output) if args.output else Path(args.pdf).with_suffix("")
+    convert_pdf(args.pdf, out_dir, args.start_page, args.max_pages, args.dpi, args.lang)
 
 
 if __name__ == "__main__":

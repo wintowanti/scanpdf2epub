@@ -6,7 +6,6 @@ splits the book into parts/chapters, and packs an EPUB3 with ebooklib.
 """
 import argparse
 import re
-import sys
 from pathlib import Path
 
 import markdown as mdlib
@@ -235,7 +234,7 @@ def build(pdf_path: Path, md_path: Path, out_path: Path, meta: dict | None = Non
             continue
         # level 2/3 -> chapter
         name = f"ch_{len(spine):03d}.xhtml"
-        page = add_chapter(book, name, title, inner, "style/style.css", lang)
+        add_chapter(book, name, title, inner, "style/style.css", lang)
         spine.append(name)
         link = epub.Link(name, title, f"sec_{len(spine)}")
         if part_section is not None:
