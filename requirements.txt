@@ -8,7 +8,7 @@ pypdfium2==5.13.0
 
 # 图像处理
 numpy==2.3.5
-pillow==12.1.0
+pillow==12.3.0
 
 # EPUB 生成
 EbookLib==0.20
