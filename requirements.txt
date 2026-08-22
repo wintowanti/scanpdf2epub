@@ -1,0 +1,15 @@
+# OCR / 版面解析（GPU 版，详见 README 安装说明）
+# paddlepaddle-gpu 3.3.1 需从 Paddle 官方 cu126 源安装，不在此列出（避免 pip 直接解析失败）
+paddleocr==3.7.0
+paddlex[ocr]==3.7.2
+
+# PDF 渲染
+pypdfium2==5.13.0
+
+# 图像处理
+numpy==2.3.5
+pillow==12.1.0
+
+# EPUB 生成
+EbookLib==0.20
+Markdown==3.10.3

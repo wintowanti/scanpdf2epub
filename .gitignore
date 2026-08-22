@@ -1,0 +1,16 @@
+# 虚拟环境
+.venv*/
+venv/
+
+# 转换产物（每个扫描 PDF 都会在旁生成同名目录 / .md / .epub）
+*.md
+*.epub
+imgs/
+__pycache__/
+
+# 但项目自身的 Markdown 文档要保留
+!README.md
+
+# 其它
+.DS_Store
+*.pyc
