@@ -4,7 +4,7 @@ paddleocr==3.7.0
 paddlex[ocr]==3.7.2
 
 # PDF 渲染
-pypdfium2==5.13.0
+pypdfium2==5.14.0
 
 # 图像处理
 numpy==2.3.5
