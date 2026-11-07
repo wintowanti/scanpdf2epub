@@ -11,5 +11,5 @@ numpy==2.3.5
 pillow==12.1.0
 
 # EPUB 生成
-EbookLib==0.20
+EbookLib==0.21
 Markdown==3.10.3
